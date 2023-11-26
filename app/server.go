@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"net"
 	"os"
 )
@@ -21,7 +22,6 @@ func main() {
 		conn, err := l.Accept()
 		if err != nil {
 			fmt.Println("Error: ", err)
-			os.Exit(0)
 			continue
 		}
 		handleConnection(conn)
@@ -29,7 +29,7 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
-	// defer conn.Close()
+	defer conn.Close()
 	fmt.Println("Received connection request", conn)
 	response := "HTTP/1.1 200 OK\r\n\r\n"
 	_, err := conn.Write([]byte(response))
@@ -37,5 +37,17 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Error writing to connection: ", err.Error())
 		os.Exit(0)
 	}
+	// Wait for the client to close the connection
+    buf := make([]byte, 1024)
+    for {
+        _, err := conn.Read(buf)
+        if err != nil {
+            if err != io.EOF {
+                fmt.Println("Error reading from connection: ", err.Error())
+            }
+            break
+        }
+    }
+    fmt.Println("Client has closed the connection")
 
 }
