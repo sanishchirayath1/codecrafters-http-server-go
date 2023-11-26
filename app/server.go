@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 )
 
 var (
@@ -11,6 +12,10 @@ var (
 	PORT    = "4221"
 	IP_PORT = IP + ":" + PORT
 )
+
+const CRLF = "\r\n"
+const HTTP_OK = "HTTP/1.1 200 OK" + CRLF + CRLF
+const HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found" + CRLF + CRLF
 
 func main() {
 	l, err := net.Listen("tcp", IP_PORT)
@@ -42,6 +47,31 @@ func main() {
 			fmt.Println("Error accepting connection: ", err.Error())
 			os.Exit(1)
 		}
+
+		request := make([]byte, 4096)
+		reqSize, err := conn.Read(request)
+		if err != nil {
+			fmt.Println("Error reading: ", err.Error())
+		}
+
+		httpProperties := extractHttpProperties(request, reqSize)
+
+		/**
+		Req Method = 0, (GET / POST/ ETC)
+		Req Url = 1, (http://example.com)
+		Proto Type = 2 (Http/1.1)
+		*/
+		reqUrl := httpProperties[1]
+		response := HTTP_OK
+		if reqUrl != "/" {
+			response = HTTP_NOT_FOUND
+		}
+		_, err = conn.Write([]byte(response))
+		if err != nil {
+			fmt.Println("Unable to close connection")
+			fmt.Println("Error responding")
+		}
+
 		_, err = conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 		if err != nil {
 			fmt.Println("Error while sending response ", err)
@@ -51,4 +81,13 @@ func main() {
 			fmt.Println("Unable to close connection ", err)
 		}
 	}
+}
+
+func extractHttpProperties(reqBuffer []byte, reqSize int) []string {
+	if reqSize == 0 {
+		return make([]string, 0)
+	}
+	req := strings.Split(string(reqBuffer[:reqSize]), CRLF)
+	reqProperties := req[0]
+	return strings.Split(reqProperties, " ")
 }
