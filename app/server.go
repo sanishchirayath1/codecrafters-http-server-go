@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"net"
 	"os"
 )
@@ -13,41 +12,37 @@ func main() {
 		fmt.Println("Failed to bind to port 4221")
 		os.Exit(1)
 	}
-	
-	defer l.Close()
 
-	fmt.Println("Waiting for connections...")
+	defer func(l net.Listener) {
+		err := l.Close()
+		if err != nil {
+			fmt.Println("Unable to close connection: ", err)
+		}
+	}(l)
+
+	fmt.Println("Listening on 4221")
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			fmt.Println("Error: ", err)
-			continue
+			fmt.Println("Error accepting connection: ", err.Error())
+			os.Exit(1)
 		}
+
 		handleConnection(conn)
 	}
 }
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
-	fmt.Println("Received connection request", conn)
 	response := "HTTP/1.1 200 OK\r\n\r\n"
 	_, err := conn.Write([]byte(response))
 	if err != nil {
 		fmt.Println("Error writing to connection: ", err.Error())
-		os.Exit(0)
 	}
-	// Wait for the client to close the connection
-    buf := make([]byte, 1024)
-    for {
-        _, err := conn.Read(buf)
-        if err != nil {
-            if err != io.EOF {
-                fmt.Println("Error reading from connection: ", err.Error())
-            }
-            break
-        }
-    }
-    fmt.Println("Client has closed the connection")
 
+	err = conn.Close()
+	if err != nil {
+		fmt.Println("Unable to close connection ", err)
+
+	}
 }
