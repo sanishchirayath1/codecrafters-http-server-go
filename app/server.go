@@ -13,7 +13,7 @@ func main() {
 		os.Exit(1)
 	}
 	
-	// defer l.Close()
+	defer l.Close()
 
 	fmt.Println("Waiting for connections...")
 
