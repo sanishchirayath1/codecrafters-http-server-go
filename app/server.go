@@ -13,7 +13,9 @@ func main() {
 		os.Exit(1)
 	}
 	
-	defer l.Close()
+	// defer l.Close()
+
+	fmt.Println("Waiting for connections...")
 
 	for {
 		conn, err := l.Accept()
@@ -27,7 +29,8 @@ func main() {
 }
 
 func handleConnection(conn net.Conn) {
-	defer conn.Close()
+	// defer conn.Close()
+	fmt.Println("Received connection request", conn)
 	response := "HTTP/1.1 200 OK\r\n\r\n"
 	_, err := conn.Write([]byte(response))
 	if err != nil {
