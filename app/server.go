@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	IP      = "0.0.0.0"
+	IP      = "localhost"
 	PORT    = "4221"
 	IP_PORT = IP + ":" + PORT
 )
@@ -65,7 +65,7 @@ func main() {
 		response := HTTP_OK
 
 		if reqUrl != "/" {
-			response = HTTP_NOT_FOUND
+			response = HTTP_NOT_FOUND + CRLF + CRLF
 		}
 
 		if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
