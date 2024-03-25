@@ -226,9 +226,11 @@ func extractUserAgent(req []byte) string {
 
 func extractRequestBody(req []byte) string {
 	lines := strings.Split(string(req), "\r\n")
-	for i, line := range lines {
-		if line == "" {
-			return strings.Join(lines[i+1:], "\r\n")
+	for i := len(lines) - 1; i >= 0; i-- {
+		line := strings.TrimRight(lines[i], "\x00")
+		line = strings.TrimSpace(line)
+		if line != "" {
+			return line
 		}
 	}
 	return ""
