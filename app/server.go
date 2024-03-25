@@ -122,7 +122,7 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 
 	if reqUrl != "/" && strings.Contains(reqUrl, "/files") {
 		fmt.Println("Handling file request")
-		response = handleFileRequest(conn, reqUrl, reqMethod, request)
+		response = handleFileRequest(conn, filesDirectory, reqMethod, request)
 	}
 
 	_, err = conn.Write([]byte(response))
@@ -150,9 +150,9 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 // 	return [][]string{strings.Split(reqProperties, " "), strings.Split(host, " "), strings.Split(agent, " ")}
 // }
 
-func handleFileRequest(conn net.Conn, reqUrl string, method string, req []byte) string {
-	fileName := strings.Split(reqUrl, "/files/")[1]
-	filesPath := reqUrl
+func handleFileRequest(conn net.Conn, directory string, method string, req []byte) string {
+	fileName := strings.Split(directory, "/files/")[1]
+	filesPath := directory
 
 	response := HTTP_OK + CRLF
 
