@@ -72,7 +72,7 @@ func main() {
 			body := reqUrl[6:]
 			headers := "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF
 
-			response = HTTP_OK + headers + CRLF + CRLF + body + CRLF + CRLF
+			response = HTTP_OK + CRLF + headers + CRLF + CRLF + body + CRLF + CRLF
 		}
 
 		_, err = conn.Write([]byte(response))
