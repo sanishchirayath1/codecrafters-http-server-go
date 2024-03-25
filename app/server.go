@@ -61,11 +61,13 @@ func main() {
 		Req Url = 1, (http://example.com)
 		Proto Type = 2 (Http/1.1)
 		*/
-		reqUrl := httpProperties[1]
+		reqUrl := httpProperties[0][1]
+		userAgent := httpProperties[2][1]
 		response := HTTP_OK + CRLF + CRLF
 
 		if reqUrl != "/" {
 			response = HTTP_NOT_FOUND + CRLF + CRLF
+
 		}
 
 		if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
@@ -73,6 +75,14 @@ func main() {
 			headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + CRLF
 
 			response = headers + body + CRLF + CRLF
+		}
+
+		fmt.Println("Getting Info:", reqUrl, userAgent)
+
+		if reqUrl != "/" && (reqUrl == "/user-agent") {
+			headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
+
+			response = headers + userAgent + CRLF + CRLF
 		}
 
 		_, err = conn.Write([]byte(response))
@@ -87,11 +97,15 @@ func main() {
 	}
 }
 
-func extractHttpProperties(reqBuffer []byte, reqSize int) []string {
+func extractHttpProperties(reqBuffer []byte, reqSize int) [][]string {
 	if reqSize == 0 {
-		return make([]string, 0)
+		return make([][]string, 0)
 	}
 	req := strings.Split(string(reqBuffer[:reqSize]), CRLF)
 	reqProperties := req[0]
-	return strings.Split(reqProperties, " ")
+	host := req[1]
+	agent := req[2]
+	// return
+	// return a map
+	return [][]string{strings.Split(reqProperties, " "), strings.Split(host, " "), strings.Split(agent, " ")}
 }
