@@ -60,15 +60,15 @@ func handleConnection(conn net.Conn) {
 		fmt.Println("Error reading: ", err.Error())
 	}
 
-	httpProperties := extractHttpProperties(request, reqSize)
+	reqUrl := extractPath(string(request[:reqSize]))
 
 	/**
 	Req Method = 0, (GET / POST/ ETC)
 	Req Url = 1, (http://example.com)
 	Proto Type = 2 (Http/1.1)
 	*/
-	reqUrl := httpProperties[0][1]
-	userAgent := httpProperties[2][1]
+	// reqUrl := httpProperties[0][1]
+	// userAgent := httpProperties[2][1]
 	response := HTTP_OK + CRLF + CRLF
 
 	if reqUrl != "/" {
@@ -84,6 +84,7 @@ func handleConnection(conn net.Conn) {
 	}
 
 	if reqUrl != "/" && (reqUrl == "/user-agent") {
+		userAgent := extractUserAgent(request)
 		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
 
 		response = headers + userAgent + CRLF + CRLF
@@ -100,15 +101,34 @@ func handleConnection(conn net.Conn) {
 	}
 }
 
-func extractHttpProperties(reqBuffer []byte, reqSize int) [][]string {
-	if reqSize == 0 {
-		return make([][]string, 0)
+// func extractHttpProperties(reqBuffer []byte, reqSize int) [][]string {
+// 	if reqSize == 0 {
+// 		return make([][]string, 0)
+// 	}
+// 	req := strings.Split(string(reqBuffer[:reqSize]), CRLF)
+// 	reqProperties := req[0]
+// 	host := req[1]
+// 	agent := req[2]
+// 	// return
+// 	// return a map
+// 	return [][]string{strings.Split(reqProperties, " "), strings.Split(host, " "), strings.Split(agent, " ")}
+// }
+
+func extractPath(req string) string {
+	var path string
+	start := strings.Index(req, " ") + 1
+	end := strings.Index(req[start:], " ") + start
+	if start > 0 && end > start {
+		path = req[start:end]
 	}
-	req := strings.Split(string(reqBuffer[:reqSize]), CRLF)
-	reqProperties := req[0]
-	host := req[1]
-	agent := req[2]
-	// return
-	// return a map
-	return [][]string{strings.Split(reqProperties, " "), strings.Split(host, " "), strings.Split(agent, " ")}
+	return path
+}
+func extractUserAgent(req []byte) string {
+	lines := strings.Split(string(req), "\r\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "User-Agent: ") {
+			return strings.TrimPrefix(line, "User-Agent: ")
+		}
+	}
+	return ""
 }
