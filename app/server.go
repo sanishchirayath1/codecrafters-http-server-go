@@ -89,8 +89,8 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 		fmt.Println("Error reading: ", err.Error())
 	}
 
+	reqMethod := extractMethod(string(request[:reqSize]))
 	reqUrl := extractPath(string(request[:reqSize]))
-
 	/**
 	Req Method = 0, (GET / POST/ ETC)
 	Req Url = 1, (http://example.com)
@@ -98,6 +98,7 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 	*/
 	// reqUrl := httpProperties[0][1]
 	// userAgent := httpProperties[2][1]
+
 	response := HTTP_OK + CRLF + CRLF
 
 	if reqUrl != "/" {
@@ -120,21 +121,13 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 	}
 
 	if reqUrl != "/" && strings.Contains(reqUrl, "/files") {
-		fileName := strings.Split(reqUrl, "/files/")[1]
-
-		fileBytes, err := loadFile(fmt.Sprintf("%s/%s", filesDirectory, fileName))
-
-		if err != nil {
-			response = HTTP_NOT_FOUND + CRLF + CRLF
-		} else {
-			headers := HTTP_OK + CRLF + "Content-Type: application/octet-stream" + CRLF + "Content-Length: " + fmt.Sprint(len(fileBytes)) + CRLF + CRLF
-			response = headers + string(fileBytes) + CRLF + CRLF
-		}
+		response = handleFileRequest(conn, reqUrl, reqMethod, request)
 	}
 
 	_, err = conn.Write([]byte(response))
 	if err != nil {
 		fmt.Println("Error responding")
+
 	}
 
 	err = conn.Close()
@@ -156,6 +149,54 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 // 	return [][]string{strings.Split(reqProperties, " "), strings.Split(host, " "), strings.Split(agent, " ")}
 // }
 
+func handleFileRequest(conn net.Conn, reqUrl string, method string, req []byte) string {
+	fileName := strings.Split(reqUrl, "/files/")[1]
+	filesPath := reqUrl
+
+	response := HTTP_OK + CRLF
+
+	if method == "GET" {
+
+		fileBytes, err := loadFile(fmt.Sprintf("%s/%s", filesPath, fileName))
+
+		if err != nil {
+			response = HTTP_NOT_FOUND + CRLF + CRLF
+		} else {
+			headers := HTTP_OK + CRLF + "Content-Type: application/octet-stream" + CRLF + "Content-Length: " + fmt.Sprint(len(fileBytes)) + CRLF + CRLF
+			response = headers + string(fileBytes) + CRLF + CRLF
+		}
+	} else if method == "POST" {
+		body := extractRequestBody(req)
+		err := os.WriteFile(fmt.Sprintf("%s/%s", filesPath, fileName), []byte(body), 0644)
+
+		if err != nil {
+			fmt.Println("Error writing file: ", err)
+			_, err = conn.Write([]byte("HTTP/1.1 500 Internal Server Error\r\n\r\n"))
+			if err != nil {
+				fmt.Println("Error writing on the connection: ", err.Error())
+			}
+		}
+
+		response = "HTTP/1.1 201 Created\r\n\r\n"
+		_, err = conn.Write([]byte(response))
+
+		if err != nil {
+			fmt.Println("Error writing on the connection: ", err.Error())
+		}
+	}
+
+	return response
+}
+
+func extractMethod(req string) string {
+	var method string
+	end := strings.Index(req, " ")
+	if end > 0 {
+		method = req[:end]
+	}
+	return method
+}
+
 func extractPath(req string) string {
 	var path string
 	start := strings.Index(req, " ") + 1
@@ -170,6 +211,16 @@ func extractUserAgent(req []byte) string {
 	for _, line := range lines {
 		if strings.HasPrefix(line, "User-Agent: ") {
 			return strings.TrimPrefix(line, "User-Agent: ")
+		}
+	}
+	return ""
+}
+
+func extractRequestBody(req []byte) string {
+	lines := strings.Split(string(req), "\r\n")
+	for i, line := range lines {
+		if line == "" {
+			return strings.Join(lines[i+1:], "\r\n")
 		}
 	}
 	return ""
