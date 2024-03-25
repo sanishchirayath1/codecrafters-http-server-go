@@ -15,7 +15,7 @@ var (
 
 const CRLF = "\r\n"
 const HTTP_OK = "HTTP/1.1 200 OK"
-const HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found" + CRLF + CRLF
+const HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found"
 
 func main() {
 	l, err := net.Listen("tcp", IP_PORT)
@@ -62,17 +62,17 @@ func main() {
 		Proto Type = 2 (Http/1.1)
 		*/
 		reqUrl := httpProperties[1]
-		response := HTTP_OK + CRLF + CRLF
+		response := HTTP_OK
 
 		if reqUrl != "/" {
 			response = HTTP_NOT_FOUND
 		}
 
 		if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
-			body := reqUrl[6:] + CRLF
-			headers := "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF
+			body := reqUrl[6:] + CRLF + CRLF
+			headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + CRLF
 
-			response = HTTP_OK + CRLF + headers + CRLF + CRLF + body + CRLF
+			response = headers + body
 		}
 
 		_, err = conn.Write([]byte(response))
