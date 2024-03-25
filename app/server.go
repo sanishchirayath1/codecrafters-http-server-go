@@ -121,6 +121,7 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 	}
 
 	if reqUrl != "/" && strings.Contains(reqUrl, "/files") {
+		fmt.Println("Handling file request")
 		response = handleFileRequest(conn, reqUrl, reqMethod, request)
 	}
 
