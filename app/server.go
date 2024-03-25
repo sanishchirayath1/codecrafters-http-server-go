@@ -48,50 +48,55 @@ func main() {
 			os.Exit(1)
 		}
 
-		request := make([]byte, 4096)
-		reqSize, err := conn.Read(request)
-		if err != nil {
-			fmt.Println("Error reading: ", err.Error())
-		}
+		go handleConnection(conn)
 
-		httpProperties := extractHttpProperties(request, reqSize)
+	}
+}
 
-		/**
-		Req Method = 0, (GET / POST/ ETC)
-		Req Url = 1, (http://example.com)
-		Proto Type = 2 (Http/1.1)
-		*/
-		reqUrl := httpProperties[0][1]
-		userAgent := httpProperties[2][1]
-		response := HTTP_OK + CRLF + CRLF
+func handleConnection(conn net.Conn) {
+	request := make([]byte, 4096)
+	reqSize, err := conn.Read(request)
+	if err != nil {
+		fmt.Println("Error reading: ", err.Error())
+	}
 
-		if reqUrl != "/" {
-			response = HTTP_NOT_FOUND + CRLF + CRLF
+	httpProperties := extractHttpProperties(request, reqSize)
 
-		}
+	/**
+	Req Method = 0, (GET / POST/ ETC)
+	Req Url = 1, (http://example.com)
+	Proto Type = 2 (Http/1.1)
+	*/
+	reqUrl := httpProperties[0][1]
+	userAgent := httpProperties[2][1]
+	response := HTTP_OK + CRLF + CRLF
 
-		if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
-			body := reqUrl[6:]
-			headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + CRLF
+	if reqUrl != "/" {
+		response = HTTP_NOT_FOUND + CRLF + CRLF
 
-			response = headers + body + CRLF + CRLF
-		}
+	}
 
-		if reqUrl != "/" && (reqUrl == "/user-agent") {
-			headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
+	if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
+		body := reqUrl[6:]
+		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + CRLF
 
-			response = headers + userAgent + CRLF + CRLF
-		}
+		response = headers + body + CRLF + CRLF
+	}
 
-		_, err = conn.Write([]byte(response))
-		if err != nil {
-			fmt.Println("Error responding")
-		}
+	if reqUrl != "/" && (reqUrl == "/user-agent") {
+		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
 
-		err = conn.Close()
-		if err != nil {
-			fmt.Println("Unable to close connection ", err)
-		}
+		response = headers + userAgent + CRLF + CRLF
+	}
+
+	_, err = conn.Write([]byte(response))
+	if err != nil {
+		fmt.Println("Error responding")
+	}
+
+	err = conn.Close()
+	if err != nil {
+		fmt.Println("Unable to close connection ", err)
 	}
 }
 
