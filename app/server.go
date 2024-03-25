@@ -69,10 +69,10 @@ func main() {
 		}
 
 		if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
-			body := reqUrl[6:]
+			body := reqUrl[6:] + CRLF
 			headers := "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF
 
-			response = HTTP_OK + CRLF + headers + CRLF + CRLF + body + CRLF + CRLF
+			response = HTTP_OK + CRLF + headers + CRLF + CRLF + body + CRLF
 		}
 
 		_, err = conn.Write([]byte(response))
