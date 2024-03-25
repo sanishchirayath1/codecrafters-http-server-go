@@ -14,7 +14,7 @@ var (
 )
 
 const CRLF = "\r\n"
-const HTTP_OK = "HTTP/1.1 200 OK" + CRLF + CRLF
+const HTTP_OK = "HTTP/1.1 200 OK"
 const HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found" + CRLF + CRLF
 
 func main() {
@@ -62,7 +62,7 @@ func main() {
 		Proto Type = 2 (Http/1.1)
 		*/
 		reqUrl := httpProperties[1]
-		response := HTTP_OK
+		response := HTTP_OK + CRLF + CRLF
 
 		if reqUrl != "/" {
 			response = HTTP_NOT_FOUND
