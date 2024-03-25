@@ -80,14 +80,10 @@ func main() {
 			fmt.Println("Error responding")
 		}
 
-		if err != nil {
-			fmt.Println("Error while sending response ", err)
-		}
-
-		err = conn.Close()
-		if err != nil {
-			fmt.Println("Unable to close connection ", err)
-		}
+		// err = conn.Close()
+		// 	if err != nil {
+		// 		fmt.Println("Unable to close connection ", err)
+		// 	}
 	}
 }
 
