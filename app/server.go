@@ -63,19 +63,27 @@ func main() {
 		*/
 		reqUrl := httpProperties[1]
 		response := HTTP_OK
+
 		if reqUrl != "/" {
 			response = HTTP_NOT_FOUND
 		}
+
+		if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
+			body := reqUrl[6:]
+			headers := "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF
+
+			response = HTTP_OK + headers + CRLF + CRLF + body + CRLF + CRLF
+		}
+
 		_, err = conn.Write([]byte(response))
 		if err != nil {
-			fmt.Println("Unable to close connection")
 			fmt.Println("Error responding")
 		}
 
-		_, err = conn.Write([]byte("HTTP/1.1 200 OK\r\n\r\n"))
 		if err != nil {
 			fmt.Println("Error while sending response ", err)
 		}
+
 		err = conn.Close()
 		if err != nil {
 			fmt.Println("Unable to close connection ", err)
