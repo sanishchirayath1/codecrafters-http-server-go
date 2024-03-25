@@ -175,7 +175,7 @@ func handleFileRequest(conn net.Conn, directory string, method string, req []byt
 		}
 	} else if method == "POST" {
 		body := extractRequestBody(req)
-		err := os.WriteFile(fmt.Sprintf("%s/%s", filePath, fileName), []byte(body), 0644)
+		err := os.WriteFile(fmt.Sprintf("%s/%s", filePath), []byte(body), 0644)
 
 		if err != nil {
 			fmt.Println("Error writing file: ", err)
