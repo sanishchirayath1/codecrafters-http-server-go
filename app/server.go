@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net"
 	"os"
@@ -18,6 +19,12 @@ const HTTP_OK = "HTTP/1.1 200 OK"
 const HTTP_NOT_FOUND = "HTTP/1.1 404 Not Found"
 
 func main() {
+	filesDirectory := flag.String("directory", "", "Directory to serve files from")
+
+	flag.Parse()
+
+	fmt.Println("Serving files from: ", *filesDirectory)
+
 	l, err := net.Listen("tcp", IP_PORT)
 	if err != nil {
 		fmt.Println("Failed to bind to port 4221")
@@ -48,12 +55,34 @@ func main() {
 			os.Exit(1)
 		}
 
-		go handleConnection(conn)
+		go handleConnection(conn, *filesDirectory)
 
 	}
 }
 
-func handleConnection(conn net.Conn) {
+func loadFile(filePath string) ([]byte, error) {
+	file, err := os.Open(filePath)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer file.Close()
+
+	fileInfo, _ := file.Stat()
+	fileSize := fileInfo.Size()
+	buffer := make([]byte, fileSize)
+
+	_, err = file.Read(buffer)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer, nil
+}
+
+func handleConnection(conn net.Conn, filesDirectory string) {
 	request := make([]byte, 4096)
 	reqSize, err := conn.Read(request)
 	if err != nil {
@@ -88,6 +117,19 @@ func handleConnection(conn net.Conn) {
 		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
 
 		response = headers + userAgent + CRLF + CRLF
+	}
+
+	if reqUrl != "/" && strings.Contains(reqUrl, "/files") {
+		fileName := strings.Split(reqUrl, "/files/")[1]
+
+		fileBytes, err := loadFile(fmt.Sprintf("%s/%s", filesDirectory, fileName))
+
+		if err != nil {
+			response = HTTP_NOT_FOUND + CRLF + CRLF
+		} else {
+			headers := HTTP_OK + CRLF + "Content-Type: application/octet-stream" + CRLF + "Content-Length: " + fmt.Sprint(len(fileBytes)) + CRLF + CRLF
+			response = headers + string(fileBytes) + CRLF + CRLF
+		}
 	}
 
 	_, err = conn.Write([]byte(response))
