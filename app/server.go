@@ -77,8 +77,6 @@ func main() {
 			response = headers + body + CRLF + CRLF
 		}
 
-		fmt.Println("Getting Info:", reqUrl, userAgent)
-
 		if reqUrl != "/" && (reqUrl == "/user-agent") {
 			headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
 
