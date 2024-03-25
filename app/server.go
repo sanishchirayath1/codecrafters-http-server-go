@@ -122,7 +122,7 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 
 	if reqUrl != "/" && strings.Contains(reqUrl, "/files") {
 		fmt.Println("Handling file request")
-		response = handleFileRequest(conn, filesDirectory, reqMethod, request)
+		response = handleFileRequest(conn, filesDirectory, reqMethod, request, reqUrl)
 	}
 
 	_, err = conn.Write([]byte(response))
@@ -150,15 +150,15 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 // 	return [][]string{strings.Split(reqProperties, " "), strings.Split(host, " "), strings.Split(agent, " ")}
 // }
 
-func handleFileRequest(conn net.Conn, directory string, method string, req []byte) string {
-	fileName := strings.Split(directory, "/files/")[1]
-	filesPath := directory
+func handleFileRequest(conn net.Conn, directory string, method string, req []byte, reqUrl string) string {
+	filePath := directory
+	fileName := strings.Split(filePath, "/files/")[1]
 
 	response := HTTP_OK + CRLF
 
 	if method == "GET" {
 
-		fileBytes, err := loadFile(fmt.Sprintf("%s/%s", filesPath, fileName))
+		fileBytes, err := loadFile(fmt.Sprintf("%s/%s", filePath, fileName))
 
 		if err != nil {
 			response = HTTP_NOT_FOUND + CRLF + CRLF
@@ -168,7 +168,7 @@ func handleFileRequest(conn net.Conn, directory string, method string, req []byt
 		}
 	} else if method == "POST" {
 		body := extractRequestBody(req)
-		err := os.WriteFile(fmt.Sprintf("%s/%s", filesPath, fileName), []byte(body), 0644)
+		err := os.WriteFile(fmt.Sprintf("%s/%s", reqUrl, fileName), []byte(body), 0644)
 
 		if err != nil {
 			fmt.Println("Error writing file: ", err)
