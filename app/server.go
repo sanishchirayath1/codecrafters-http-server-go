@@ -152,6 +152,8 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 
 func handleFileRequest(conn net.Conn, directory string, method string, req []byte, reqUrl string) string {
 	filePath := directory
+	fmt.Println("File Path: ", filePath)
+
 	fileName := strings.Split(filePath, "/files/")[1]
 
 	response := HTTP_OK + CRLF
