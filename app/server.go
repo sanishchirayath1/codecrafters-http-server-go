@@ -62,7 +62,7 @@ func main() {
 		Proto Type = 2 (Http/1.1)
 		*/
 		reqUrl := httpProperties[1]
-		response := HTTP_OK
+		response := HTTP_OK + CRLF + CRLF
 
 		if reqUrl != "/" {
 			response = HTTP_NOT_FOUND + CRLF + CRLF
