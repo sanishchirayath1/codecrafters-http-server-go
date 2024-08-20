@@ -108,15 +108,20 @@ func handleConnection(conn net.Conn, filesDirectory string) {
 
 	if reqUrl != "/" && strings.HasPrefix(reqUrl, "/echo/") {
 		body := reqUrl[6:]
-		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + CRLF
+		encoding := extractCompressionHeader(request)
+		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + "Accept-Encoding: " + encoding + CRLF + CRLF + CRLF + CRLF
 
+		if(encoding == ""){
+			headers = HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(body)) + CRLF + CRLF
+		}
+		
 		response = headers + body + CRLF + CRLF
 	}
 
 	if reqUrl != "/" && (reqUrl == "/user-agent") {
 		userAgent := extractUserAgent(request)
-		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + CRLF
-
+		encoding := extractCompressionHeader(request)
+		headers := HTTP_OK + CRLF + "Content-Type: text/plain" + CRLF + "Content-Length: " + fmt.Sprint(len(userAgent)) + CRLF + "Accept-Encoding: " + encoding + CRLF + CRLF
 		response = headers + userAgent + CRLF + CRLF
 	}
 
@@ -231,6 +236,16 @@ func extractRequestBody(req []byte) string {
 		line = strings.TrimSpace(line)
 		if line != "" {
 			return line
+		}
+	}
+	return ""
+}
+
+func extractCompressionHeader(req []byte) string {
+	lines := strings.Split(string(req), "\r\n")
+	for _, line := range lines {
+		if strings.HasPrefix(line, "Accept-Encoding: ") {
+			return strings.TrimPrefix(line, "Accept-Encoding: ")
 		}
 	}
 	return ""
